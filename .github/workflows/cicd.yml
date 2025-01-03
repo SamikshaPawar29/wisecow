@@ -7,49 +7,37 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest  # Run the job on an Ubuntu runner
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    # Step 1: Set up Docker
     - name: Set up Docker
       uses: docker/setup-buildx-action@v2
 
-    # Step 2: Login to DockerHub
     - name: Login to DockerHub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # Step 3: Build and Push Docker Image
     - name: Build and Push Docker Image
       run: |
         docker build -t samikshapawar29/wisecow-app:latest .
         docker push samikshapawar29/wisecow-app:latest
 
-    # Step 4: Install Minikube
-    - name: Install Minikube
+    - name: Set up Minikube
       run: |
-        curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-        sudo chmod +x minikube
-        sudo mv minikube /usr/local/bin/
-
-    # Step 5: Start Minikube (using Docker as the driver)
-    - name: Start Minikube
-      run: |
+        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        sudo mv minikube-linux-amd64 /usr/local/bin/minikube
+        sudo chmod +x /usr/local/bin/minikube
         minikube start --driver=docker
+        minikube status
 
-    # Step 6: Set up kubectl
     - name: Set up kubectl
-      run: |
-        curl -LO https://dl.k8s.io/release/v1.24.0/bin/linux/amd64/kubectl
-        chmod +x ./kubectl
-        sudo mv ./kubectl /usr/local/bin/kubectl
+      uses: azure/setup-kubectl@v3
 
-    # Step 7: Deploy to Kubernetes (apply the Kubernetes YAML files)
     - name: Deploy to Kubernetes
       env:
         KUBECONFIG: ${{ secrets.KUBECONFIG }}

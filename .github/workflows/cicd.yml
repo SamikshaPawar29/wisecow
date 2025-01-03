@@ -27,19 +27,22 @@ jobs:
         docker build -t samikshapawar29/wisecow-app:latest .
         docker push samikshapawar29/wisecow-app:latest
 
-    - name: Set up Minikube
+    - name: Install KinD
       run: |
-        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-        sudo mv minikube-linux-amd64 /usr/local/bin/minikube
-        sudo chmod +x /usr/local/bin/minikube
-        minikube start --driver=docker
-        minikube status
+        curl -Lo kind https://github.com/kubernetes-sigs/kind/releases/download/v0.17.0/kind-linux-amd64
+        sudo chmod +x kind
+        sudo mv kind /usr/local/bin/
+
+    - name: Create KinD Cluster
+      run: |
+        kind create cluster
 
     - name: Set up kubectl
-      uses: azure/setup-kubectl@v3
+      run: |
+        curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.21.0/bin/linux/amd64/kubectl
+        sudo mv kubectl /usr/local/bin/
+        sudo chmod +x /usr/local/bin/kubectl
 
-    - name: Deploy to Kubernetes
-      env:
-        KUBECONFIG: ${{ secrets.KUBECONFIG }}
+    - name: Deploy to KinD Kubernetes Cluster
       run: |
         kubectl apply -f k8s/
